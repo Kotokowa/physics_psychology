@@ -180,7 +180,7 @@ function renderOptions(){
   els.options.innerHTML = "";
   question.options.forEach((option, index) => {
     const settledCount = settledPickCount(index);
-    const rate = successRate(settledCount);
+    const rate = successRate(settledCount, option);
     const div = document.createElement("div");
     div.className = "option";
     div.addEventListener("click", () => selectOption(index, div));
@@ -367,15 +367,17 @@ function settleCurrentBatch(){
   records.forEach((record) => {
     const team = state.teams[record.teamIndex];
     const sameBefore = settledCountsBeforeBatch[record.optionIndex] || 0;
-    const rate = successRate(sameBefore);
+    const rate = successRate(sameBefore, record.option);
     const roll = Math.floor(Math.random() * 100) + 1;
     const success = roll <= rate;
-    const finalScore = success ? { ...record.score } : failedScore(record.score);
+    const debuff = success ? emptyScore() : randomDebuff();
+    const finalScore = addScores(record.score, debuff);
     const decision = team.decisions[team.decisions.length - 1];
 
     applyScore(team, finalScore);
     Object.assign(decision, {
       finalScore: { ...finalScore },
+      debuff: { ...debuff },
       successRate: rate,
       roll,
       success
@@ -385,7 +387,7 @@ function settleCurrentBatch(){
     }
     state.currentRoundSettledPicks[record.optionIndex].push(record.teamIndex);
 
-    addLog(`${team.name}｜${record.option.name}｜成功率 ${rate}%｜随机数 ${roll}｜${success ? "成功" : "受阻"}，${formatScore("结算", finalScore)}。`);
+    addLog(`${team.name}｜${record.option.name}｜成功率 ${rate}%｜随机数 ${roll}｜${success ? "顺利执行" : `受阻，追加 ${formatScore("debuff", debuff)}`}，${formatScore("结算", finalScore)}。`);
     updateRestStateForTeam(team);
   });
 }
@@ -604,27 +606,37 @@ function snapshotSettledCounts(){
   );
 }
 
-function successRate(sameChoicePressure){
+function successRate(sameChoicePressure, option = {}){
   const config = GAME_CONFIG.probability;
   return clampNumber(
-    config.baseRate - sameChoicePressure * config.perSameChoicePenalty,
+    config.baseRate + (option.successMod || 0) - sameChoicePressure * config.perSameChoicePenalty,
     config.minRate,
     config.maxRate
   );
 }
 
-function failedScore(delta){
-  const multiplier = GAME_CONFIG.failedPositiveMultiplier ?? 0.4;
-  return {
-    stamina: failedStat(delta.stamina || 0, multiplier),
-    mood: failedStat(delta.mood || 0, multiplier),
-    gpa: failedStat(delta.gpa || 0, multiplier)
-  };
+function randomDebuff(){
+  const config = GAME_CONFIG.probability;
+  const targets = shuffle(["stamina", "mood", "gpa"]).slice(
+    0,
+    randomInt(config.debuffTargetsMin, config.debuffTargetsMax)
+  );
+  return targets.reduce((delta, key) => {
+    delta[key] = -randomOneDecimal(config.debuffMin, config.debuffMax);
+    return delta;
+  }, emptyScore());
 }
 
-function failedStat(value, multiplier){
-  if(value <= 0) return value;
-  return Math.floor(value * multiplier);
+function emptyScore(){
+  return { stamina: 0, mood: 0, gpa: 0 };
+}
+
+function addScores(a, b){
+  return {
+    stamina: roundOneDecimal((a.stamina || 0) + (b.stamina || 0)),
+    mood: roundOneDecimal((a.mood || 0) + (b.mood || 0)),
+    gpa: roundOneDecimal((a.gpa || 0) + (b.gpa || 0))
+  };
 }
 
 function score(team){
@@ -635,7 +647,7 @@ function score(team){
 function scoreRuleText(){
   const weights = GAME_CONFIG.scoreWeights;
   const probability = GAME_CONFIG.probability;
-  return `总分 = 体力 x ${weights.stamina} + 心情 x ${weights.mood} + GPA x ${weights.gpa}。结算会按成功率随机判定；同轮同选项越集中，成功率越低，最低 ${probability.minRate}%。`;
+  return `总分 = 体力 x ${weights.stamina} + 心情 x ${weights.mood} + GPA x ${weights.gpa}。结算会按成功率随机判定；前面批次同选项越集中，后续成功率越低，最低 ${probability.minRate}%。未顺利执行时，会在原选项分值上追加轻微 debuff。`;
 }
 
 function currentInitialStats(){
@@ -677,15 +689,32 @@ function formatTime(ms){
 }
 
 function signed(value){
-  return value > 0 ? `+${value}` : String(value);
+  const rounded = roundOneDecimal(value);
+  return rounded > 0 ? `+${formatNumber(rounded)}` : formatNumber(rounded);
 }
 
 function clampStat(value){
-  return clampNumber(value, MIN_STAT, MAX_STAT);
+  return roundOneDecimal(clampNumber(value, MIN_STAT, MAX_STAT));
 }
 
 function clampNumber(value, min, max){
   return Math.max(min, Math.min(max, value));
+}
+
+function randomInt(min, max){
+  return Math.floor(Math.random() * (max - min + 1)) + min;
+}
+
+function randomOneDecimal(min, max){
+  return roundOneDecimal(min + Math.random() * (max - min));
+}
+
+function roundOneDecimal(value){
+  return Math.round(value * 10) / 10;
+}
+
+function formatNumber(value){
+  return Number.isInteger(value) ? String(value) : value.toFixed(1);
 }
 
 function progressPercent(){
