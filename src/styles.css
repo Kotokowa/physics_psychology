@@ -463,6 +463,61 @@ tr:last-child td{border-bottom:0}
 
 .reflection{margin-top:16px}
 
+.trap-modal{
+  position:fixed;
+  inset:0;
+  z-index:20;
+  display:grid;
+  place-items:center;
+  padding:18px;
+  background:rgba(15,23,42,.36);
+}
+
+.trap-dialog{
+  width:min(420px,100%);
+  background:#fff;
+  border:1px solid #fecaca;
+  border-radius:16px;
+  box-shadow:0 20px 48px rgba(15,23,42,.24);
+  padding:18px;
+  text-align:left;
+}
+
+.trap-kicker{
+  display:inline-flex;
+  margin-bottom:8px;
+  padding:3px 8px;
+  border-radius:999px;
+  background:#fee2e2;
+  color:#991b1b;
+  font-size:12px;
+  font-weight:800;
+}
+
+.trap-dialog h2{
+  margin:0 0 8px;
+  font-size:20px;
+}
+
+.trap-message{
+  color:#374151;
+  font-size:14px;
+  line-height:1.55;
+}
+
+.trap-message p{
+  margin:0 0 8px;
+}
+
+.trap-message p:last-child{
+  margin-bottom:0;
+}
+
+.trap-dialog button{
+  margin-top:14px;
+  width:100%;
+}
+
 #game{
   height:calc(100dvh - 86px);
   min-height:0;

@@ -15,6 +15,7 @@ export const GAME_CONFIG = {
     perSameChoicePenalty: 9,
     minRate: 35,
     maxRate: 95,
+    trapRate: 1,
     debuffMin: 0.1,
     debuffMax: 2,
     debuffTargetsMin: 1,
@@ -54,7 +55,11 @@ export const QUESTIONS = [
         name: "A. 通宵抢进度",
         desc: "今晚直接拉满，把最厚的章节先啃掉。短期 GPA 回报高，但身体和心态都要付账。",
         score: { stamina: -4, mood: -2, gpa: 5 },
-        successMod: -10
+        successMod: -10,
+        trap: {
+          stat: "stamina",
+          reason: "通宵抢进度把身体电量直接榨干，眼前多背了几页，下一轮却只能被迫停机。"
+        }
       },
       {
         name: "B. 画出最低复习线",
@@ -102,7 +107,11 @@ export const QUESTIONS = [
         name: "C. 一人多线程硬扛",
         desc: "把所有任务同时打开，靠意志力维持运转。看起来很燃，也很容易崩。",
         score: { stamina: -4, mood: -3, gpa: 5 },
-        successMod: -12
+        successMod: -12,
+        trap: {
+          stat: "mood",
+          reason: "多线程硬扛触发了系统过载，任务还没排完，心态先被挤爆了。"
+        }
       },
       {
         name: "D. 找同学借模板和经验",
@@ -144,7 +153,11 @@ export const QUESTIONS = [
         name: "D. 一个人接管全部内容",
         desc: "最快，但也最消耗。适合最后关头救火，不适合长期复制。",
         score: { stamina: -4, mood: -2, gpa: 4 },
-        successMod: -8
+        successMod: -8,
+        trap: {
+          stat: "stamina",
+          reason: "一个人接管全部内容导致体力瞬间透支，项目被推进了，人也被按下暂停键。"
+        }
       },
       {
         name: "E. 先在群里阴阳怪气",
@@ -174,7 +187,11 @@ export const QUESTIONS = [
         name: "C. 咖啡续命冲一波",
         desc: "短期提神，适合最后处理小任务，但不能当长期能源。",
         score: { stamina: -3, mood: -1, gpa: 4 },
-        successMod: -10
+        successMod: -10,
+        trap: {
+          stat: "stamina",
+          reason: "咖啡续命没有续上，反而把最后一点体力刷空了。"
+        }
       },
       {
         name: "D. 和朋友散步十分钟",
@@ -222,7 +239,11 @@ export const QUESTIONS = [
         name: "E. 玄学押题搏一把",
         desc: "很刺激，命中会很爽，没命中就要承受偏科代价。",
         score: { stamina: -1, mood: 0, gpa: 5 },
-        successMod: -15
+        successMod: -15,
+        trap: {
+          stat: "mood",
+          reason: "押题路线突然塌方，越想越慌，心情值被不确定性直接清空。"
+        }
       }
     ]
   },
@@ -234,7 +255,11 @@ export const QUESTIONS = [
         name: "A. 通宵背完所有内容",
         desc: "理论上最拼，现实中很容易把最后一天烧穿。",
         score: { stamina: -5, mood: -3, gpa: 6 },
-        successMod: -15
+        successMod: -15,
+        trap: {
+          stat: "stamina",
+          reason: "最后 24 小时通宵拉满，身体系统直接亮红灯，只能强制休息。"
+        }
       },
       {
         name: "B. 高频重点 + 睡够 6 小时",

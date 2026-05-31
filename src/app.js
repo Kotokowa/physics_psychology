@@ -61,7 +61,10 @@ const els = {
   confirmBtn: document.getElementById("confirmBtn"),
   resultTable: document.getElementById("resultTable"),
   scoreRule: document.getElementById("scoreRule"),
-  reflectionText: document.getElementById("reflectionText")
+  reflectionText: document.getElementById("reflectionText"),
+  trapModal: document.getElementById("trapModal"),
+  trapMessage: document.getElementById("trapMessage"),
+  trapCloseBtn: document.getElementById("trapCloseBtn")
 };
 
 document.getElementById("startBtn").addEventListener("click", initGame);
@@ -71,6 +74,7 @@ document.getElementById("againBtn").addEventListener("click", resetGame);
 document.getElementById("randomBtn").addEventListener("click", autoChoice);
 els.confirmBtn.addEventListener("click", confirmChoice);
 els.pauseBtn.addEventListener("click", toggleTimerPause);
+els.trapCloseBtn.addEventListener("click", hideTrapModal);
 els.modeOptions.forEach((button) => {
   button.addEventListener("click", () => setMode(button.dataset.mode));
 });
@@ -120,6 +124,7 @@ function resetGame(){
   els.setup.classList.remove("hidden");
   els.game.classList.add("hidden");
   els.result.classList.add("hidden");
+  els.trapModal.classList.add("hidden");
   document.body.classList.remove("is-playing", "is-result");
 }
 
@@ -388,8 +393,21 @@ function settleCurrentBatch(){
     state.currentRoundSettledPicks[record.optionIndex].push(record.teamIndex);
 
     addLog(`${team.name}｜${record.option.name}｜成功率 ${rate}%｜随机数 ${roll}｜${success ? "顺利执行" : `受阻，追加 ${formatScore("debuff", debuff)}`}，${formatScore("结算", finalScore)}。`);
+    maybeTriggerTrap(team, record.option);
     updateRestStateForTeam(team);
   });
+}
+
+function maybeTriggerTrap(team, option){
+  if(!option.trap || team.skip > 0) return;
+  const trapRate = GAME_CONFIG.probability.trapRate || 1;
+  if(Math.random() * 100 >= trapRate) return;
+  const stat = option.trap.stat === "mood" ? "mood" : "stamina";
+  team[stat] = 0;
+  const statLabel = stat === "mood" ? "心情" : "体力";
+  const message = `${team.name} 因为「${option.name}」触发突发状况：${option.trap.reason}`;
+  addLog(`${message}${statLabel}被清零，将进入强制休息。`);
+  showTrapModal(team.name, statLabel, option.trap.reason);
 }
 
 function updateRestStateForTeam(team){
@@ -407,6 +425,7 @@ function updateRestStateForTeam(team){
 
 function showResult(){
   clearTurnTimer();
+  hideTrapModal();
   els.game.classList.add("hidden");
   els.result.classList.remove("hidden");
   document.body.classList.remove("is-playing");
@@ -433,6 +452,19 @@ function showResult(){
       <tbody>${rows}</tbody>
     </table>
   `;
+}
+
+function showTrapModal(teamName, statLabel, reason){
+  els.trapMessage.innerHTML = `
+    <p><b>${teamName}</b> 因为冒进策略触发突发状况。</p>
+    <p>${reason}</p>
+    <p>${statLabel}已清零，本组将被强制休息。</p>
+  `;
+  els.trapModal.classList.remove("hidden");
+}
+
+function hideTrapModal(){
+  els.trapModal.classList.add("hidden");
 }
 
 function applyScore(team, delta){
